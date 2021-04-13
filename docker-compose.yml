@@ -1,0 +1,33 @@
+version: "3.9"
+
+x-app: &app
+  image: postgres:12.5
+  stdin_open: true
+  tty: true
+
+services:
+  db:
+    <<: *app
+    expose:
+      - 5432
+    environment:
+      POSTGRES_PASSWORD: postgres
+      PGPASSWORD: postgres
+
+    volumes:
+      - "./pgdata:/data/"
+    healthcheck:
+      test: pg_isready -U postgres -h 127.0.0.1
+      interval: 5s
+
+  psql:
+    <<: *app
+    command: bash -c "PGPASSWORD=postgres psql -h db -p 5432 -U postgres -d postgres"
+    depends_on:
+      - db
+
+  runner:
+    <<: *app
+    command: /bin/bash
+    depends_on:
+      - db
